@@ -1,0 +1,478 @@
+#+STARTUP: showeverything 
+#+TITLE: Ayush's Emacs Config
+#+AUTHOR: Ayush Jayaswal 
+#+DESCRIPTION: Ayush's Config For emacs
+#+OPTIONS: toc:2
+#+PROPERTY: header-args:emacs-lisp :tangle ./init.el
+
+* TABLE OF CONTENTS :toc:
+- [[#package-manager][PACKAGE MANAGER]]
+- [[#appearance][APPEARANCE]]
+  - [[#theme][Theme]]
+  - [[#font][Font]]
+- [[#packages][PACKAGES]]
+  - [[#beacon][Beacon]]
+  - [[#bottom-menu][Bottom Menu]]
+  - [[#company][Company]]
+  - [[#dashboard][Dashboard]]
+  - [[#load-evil-mode][Load Evil Mode]]
+  - [[#modeline][Modeline]]
+  - [[#rainbow-delimiters][Rainbow Delimiters]]
+  - [[#vterm][Vterm]]
+  - [[#which-key][Which key]]
+- [[#basic-interface-settings][BASIC INTERFACE SETTINGS]]
+  - [[#looks][Looks]]
+  - [[#functionality][Functionality]]
+  - [[#cool-icons][Cool Icons]]
+- [[#minor-conveiniences][MINOR CONVEINIENCES]]
+  - [[#reloading-the-configuration][Reloading the configuration]]
+  - [[#subwords][Subwords]]
+- [[#git-integration][GIT INTEGRATION]]
+  - [[#magit][Magit]]
+- [[#general-keybindings][GENERAL KEYBINDINGS]]
+- [[#sudo-edit][SUDO EDIT]]
+- [[#org-mode][ORG MODE]]
+  - [[#enabling-table-of-contents][Enabling Table of Contents]]
+  - [[#enabling-org-bullets][Enabling Org Bullets]]
+  - [[#source-code-block-tag-expansion][Source Code Block Tag Expansion]]
+- [[#lsp-integration][LSP INTEGRATION]]
+
+* PACKAGE MANAGER
+#+begin_src emacs-lisp
+(require 'package)
+(setq package-archives '(("melpa" . "https://melpa.org/packages/")
+                         ("org" . "https://orgmode.org/elpa/")
+                         ("elpa" . "https://elpa.gnu.org/packages/")))
+(package-initialize)
+#+end_src
+
+* APPEARANCE
+My Archmacs have killer looks. The code of this section is responsible for it.
+** Theme
+When my crush rejected me by saying you are ugly. I learned that looks matter alot.
+My emacs will not be ugly like me and no one will dump my config for this.
+So I decided to use =doom-themes=. You can change =doom-themes= to any other theme.
+Theme
+#+begin_src emacs-lisp
+  (use-package doom-themes
+    :config
+    ;; Global settings (defaults)
+    (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+          doom-themes-enable-italic t) ; if nil, italics is universally disabled
+    (load-theme 'doom-gruvbox t)
+    (doom-themes-visual-bell-config)
+    (doom-themes-neotree-config)
+    (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
+    (doom-themes-treemacs-config)
+    (doom-themes-org-config))
+  (setq doom-theme 'doom-gruvbox )
+#+end_src
+** Font
+Just like with power comes great responsibility, with great theme comes great font.
+#+begin_src emacs-lisp
+  (set-face-attribute 'default nil
+                      :font "Mononoki Nerd Font"
+                      :height 150
+                      :weight 'medium)
+  (set-face-attribute 'variable-pitch nil
+                      :font "Mononoki Nerd Font"
+                      :height 180
+                      :weight 'medium)
+  (set-face-attribute 'fixed-pitch nil
+                      :font "Hack Nerd Font"
+                      :height 150
+                      :weight 'medium)
+  ;; Makes commented text and keywords italics.
+  ;; This is working in emacsclient but not emacs.
+  ;; Your font must have an italic face available.
+  (set-face-attribute 'font-lock-comment-face nil
+                      :slant 'italic)
+  (set-face-attribute 'font-lock-keyword-face nil
+                      :slant 'italic)
+  ;; This sets the default font on all graphical frames created after restarting Emacs.
+  ;; Does the same thing as 'set-face-attribute default' above, but emacsclient fonts
+  ;; are not right unless I also add this method of setting the default font.
+  (add-to-list 'default-frame-alist '(font . "Hack Nerd Font-15"))
+  ;; Uncomment the following line if line spacing needs adjusting.
+  (setq-default line-spacing 0.12)
+#+end_src
+
+* PACKAGES
+** Beacon
+While changing buffers or workspaces, the first thing you do is look for you cursor. Unless you know its position, you can not move it efficiently.
+Every time you change buffers, the current position of your cursor will be briefly highlighted now.
+#+begin_src emacs-lisp
+  (use-package beacon
+    :ensure t
+    :config
+      (beacon-mode 1))
+#+end_src
+** Bottom Menu
+Vertico provides a performant and minimalistic vertical completion UI based on the default completion system. The focus of Vertico is to provide a UI which behaves correctly under all circumstances.
+#+begin_src emacs-lisp
+  (use-package counsel
+    :after ivy
+    :config (counsel-mode))
+  (use-package ivy
+    :bind
+    ;; ivy-resume resumes the last Ivy-based completion.
+    (("C-c C-r" . ivy-resume)
+     ("C-x B" . ivy-switch-buffer-other-window))
+    :custom
+    (setq ivy-use-virtual-buffers t)
+    (setq ivy-count-format "(%d/%d) ")
+    (setq enable-recursive-minibuffers t)
+    :config
+    (ivy-mode))
+  (use-package all-the-icons-ivy-rich
+    :init (all-the-icons-ivy-rich-mode 1))
+  (use-package ivy-rich
+    :after ivy
+    :init (ivy-rich-mode 1) ;; this gets us descriptions in M-x.
+    :custom
+    (ivy-virtual-abbreviate 'full
+                            ivy-rich-switch-buffer-align-virtual-buffer t
+                            ivy-rich-path-style 'abbrev)
+    :config
+    (ivy-set-display-transformer 'ivy-switch-buffer
+                                 'ivy-rich-switch-buffer-transformer))  ;; Enable rich annotations using the Marginalia package
+  (use-package marginalia
+    :after ivy
+    :custom
+    (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil))
+    :init
+    (marginalia-mode))
+  (use-package orderless
+    :custom
+    (completion-styles '(orderless basic))
+    (completion-category-overrides '((file (styles basic partial-completion)))))
+#+end_src
+** Company
+#+begin_src emacs-lisp
+  (use-package company )
+  (add-hook 'after-init-hook 'global-company-mode)
+#+end_src
+** Dashboard
+An extensible emacs startup screen showing you what’s most important.
+#+begin_src emacs-lisp
+  (use-package dashboard
+    :config
+    (dashboard-setup-startup-hook))
+  (setq initial-buffer-choice (lambda () (get-buffer-create "*dashboard*")))
+  (setq dashboard-banner-logo-title "EMACS")
+  (setq dashboard-startup-banner "~/.config/emacs/avatar.png")
+  (setq dashboard-center-content t)
+  (setq dashboard-display-icons-p nil) ;; display icons on both GUI and terminal
+  (setq dashboard-icon-type 'nerd-icons) ;; use `nerd-icons' package
+  (setq dashboard-set-heading-icons t)
+  (setq dashboard-set-file-icons t)
+  (setq dashboard-set-navigator t)
+  (dolist (mode '(dashboard-mode-hook))
+    (add-hook mode (lambda () (display-line-numbers-mode 0))))
+#+end_src
+** Load Evil Mode
+#+begin_src emacs-lisp
+  ;; Expands to: (elpaca evil (use-package evil :demand t))
+  (use-package evil
+    :init      ;; tweak evil's configuration before loading it
+    (setq evil-want-integration t) ;; This is optional since it's already set to t by default.
+    (setq evil-want-keybinding nil)
+    (setq evil-vsplit-window-right t)
+    (setq evil-split-window-below t)
+    (evil-mode))
+  (use-package evil-collection
+    :after evil
+    :config
+    (setq evil-collection-mode-list '(dashboard dired ibuffer))
+    (evil-collection-init))
+  (use-package evil-tutor)
+#+end_src
+** Modeline
+#+begin_src emacs-lisp
+  (use-package doom-modeline
+    :init (doom-modeline-mode 1)
+    :hook (after-init . doom-modeline-mode))
+  (setq doom-modeline-height 30)
+#+end_src
+** Rainbow Delimiters
+#+begin_src emacs-lisp
+  (use-package rainbow-delimiters
+    :hook (prog-mode . rainbow-delimiters-mode))
+#+end_src
+** Vterm
+#+begin_src emacs-lisp
+  (use-package vterm)
+  (setq vterm-toggle-fullscreen-p nil)
+  (add-to-list 'display-buffer-alist
+               '((lambda (buffer-or-name _)
+                   (let ((buffer (get-buffer buffer-or-name)))
+                     (with-current-buffer buffer
+                       (or (equal major-mode 'vterm-mode)
+                           (string-prefix-p vterm-buffer-name (buffer-name buffer))))))
+                 (display-buffer-reuse-window display-buffer-at-bottom)
+                 (reusable-frames . visible)
+                 (window-height . 0.3)))
+  ;; Disable line numbers for some modes
+  (dolist (mode '(vterm-mode-hook))
+    (add-hook mode (lambda () (display-line-numbers-mode 0))))
+#+end_src
+** Which key
+#+begin_src emacs-lisp
+  (use-package which-key
+    :init
+    (which-key-mode 1))
+    ;;:config
+     ;;(setq which-key-sort-uppercase-first nil
+           ;;which-key-idle-delay 0.8
+           ;;which-key-separator " → " ))
+#+end_src
+* BASIC INTERFACE SETTINGS
+These are settings that do not depend on packages and built-in enchancements to the UI.
+** Looks
+*** Disable bell
+This is annoying, remove this line if you like being visually reminded of events.
+#+BEGIN_SRC emacs-lisp
+;  (setq ring-bell-function 'ignore)
+#+END_SRC
+*** Disable menus and scrollbars
+If you like using any of those, change =-1= to =1=.
+#+BEGIN_SRC emacs-lisp
+  (tool-bar-mode -1)
+  (menu-bar-mode -1)
+  (scroll-bar-mode -1)
+#+END_SRC
+*** Display Line Numbers and Truncated Lines
+Following codeblock enables Line Numbers.
+#+begin_src emacs-lisp
+  (global-display-line-numbers-mode 1)
+  (global-visual-line-mode t)
+  (global-hl-line-mode t)
+#+end_src
+*** No Gui Dialogs
+#+begin_src emacs-lisp
+  (setq use-dialog-box nil)  ;; Don't use gui dialog boxes.
+#+end_src
+*** Remove lame startup screen
+We use an actual replacement for it, keep reading or head directly to dashboard
+#+BEGIN_SRC emacs-lisp
+  (setq inhibit-startup-message t)
+#+END_SRC
+*** Set UTF-8 encoding
+#+BEGIN_SRC emacs-lisp
+  (setq locale-coding-system 'utf-8)
+  (set-terminal-coding-system 'utf-8)
+  (set-keyboard-coding-system 'utf-8)
+  (set-selection-coding-system 'utf-8)
+  (prefer-coding-system 'utf-8)
+#+END_SRC
+** Functionality
+*** Automatic Pairing
+#+begin_src emacs-lisp
+  (electric-pair-mode 1)     ;; Enable automatic insertion of matching brackets
+#+end_src
+*** Change yes-or-no questions into y-or-n questions
+#+begin_src emacs-lisp
+  (defalias 'yes-or-no-p 'y-or-n-p)
+#+end_src
+*** Disable backups and auto-saves
+I don't use either, you might want to turn those from =nil= to =t= if you do.
+#+begin_src emacs-lisp
+  (setq make-backup-files nil)
+  (setq auto-save-default nil)
+#+end_src
+*** Ensure Package Manager Installs
+#+begin_src emacs-lisp
+  (setq use-package-always-ensure t)
+#+end_src
+*** Global Escape
+Use escape key to leave anything.
+#+begin_src emacs-lisp
+  (global-set-key (kbd "<escape>") 'keyboard-escape-quit) ;;
+#+end_src
+*** Show Columns too
+#+begin_src emacs-lisp
+  (column-number-mode)       ;; Show Column numbers too.
+#+end_src
+*** Zooming In/Out
+You can use the bindings CTRL plus =/- for zooming in/out.  You can also use CTRL plus the mouse wheel for zooming in/out.
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C-=") 'text-scale-increase)
+  (global-set-key (kbd "C--") 'text-scale-decrease)
+  (global-set-key (kbd "<C-wheel-up>") 'text-scale-increase)
+  (global-set-key (kbd "<C-wheel-down>") 'text-scale-decrease)
+#+end_src
+** Cool Icons
+#+begin_src emacs-lisp
+  (use-package all-the-icons
+    :ensure t
+    :init)
+  (use-package all-the-icons-dired
+    :ensure t
+    :init (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
+  (use-package all-the-icons-ibuffer
+    :ensure t
+    :init (all-the-icons-ibuffer-mode 1))
+#+end_src
+
+* MINOR CONVEINIENCES
+Emacs is at it's best when it just does things for you, shows you the way, guides you so to
+speak. This can be best achieved using a number of small extensions. While on their own they
+might not be particularly impressive. 
+** Reloading the configuration
+Closing and opening emacs again after some quick changes in config is pain, especially when
+you are using emacs as a window manager. So here I bind a key =C-c r= to do it quickly without
+closing emacs. 
+#+BEGIN_SRC emacs-lisp
+  (defun config-reload ()
+    (interactive)
+    (org-babel-load-file (expand-file-name "~/.config/emacs/config.org")))
+  (global-set-key (kbd "C-c r") 'config-reload)
+#+END_SRC
+** Subwords
+Subword will remaps word-based editing commands to subword-based commands that 
+handle symbols with mixed uppercase and lowercase letters.
+#+BEGIN_SRC emacs-lisp
+  (global-subword-mode 1)
+#+END_SRC
+* GIT INTEGRATION
+Countless are the times where I opened vterm and use =git= on something. These times are also something that I'd prefer stay in the past, since =magit= is great.
+It's easy and intuitive to use, shows it's options at a keypress and much more.
+** Magit
+=magit= is a amazing /melpa/ package which allow me to use git within emacs more better way.
+#+BEGIN_SRC emacs-lisp
+  (use-package magit
+    :ensure t
+    :config
+    (setq magit-push-always-verify nil)
+    (setq git-commit-summary-max-length 50)
+    :bind
+    ("M-g" . magit-status))
+#+END_SRC/g/
+
+* GENERAL KEYBINDINGS
+#+begin_src emacs-lisp
+    (use-package general
+      :config
+      (general-evil-setup)
+      ;; set up 'SPC' as the global leader key
+      (general-create-definer emacs/leader-keys
+        :states '(normal insert visual emacs)
+        :keymaps 'override
+        :prefix "SPC" ;; set leader
+        :global-prefix "M-SPC") ;; access leader in insert mode
+      (emacs/leader-keys
+        "f" '(:ignore t :wk "File Options")
+        "." '(find-file :wk "Find file")
+        "f f" '(find-file :wk "Find file")
+        "f c" '((lambda () (interactive) (find-file "~/.config/emacs/config.org")) :wk "Edit emacs config")
+        "TAB TAB" '(comment-line :wk "Comment lines"))
+      (emacs/leader-keys
+        "o" '(:ignore t :wk "Org-Mode Commands")
+        "o a" '(org-agenda :wk "Org Agenda")
+        "o o" '(org-mode :wk "Org Mode"))
+      (emacs/leader-keys
+        ";" '(:ignore t :wk "Bookmark Options")
+        "; b" '(bookmark-jump :wk "Quickly Jump to a Bookmark")
+        "; a" '(bookmark-set :wk "Create a Bookmark")
+        "; d" '(bookmark-delete :wk "Delete a Saved Bookmark"))
+      (emacs/leader-keys
+        "b" '(:ignore t :wk "buffer")
+        "b b" '(switch-to-buffer :wk "Switch buffer")
+        "b i" '(ibuffer :wk "Ibuffer")
+        "b k" '(kill-this-buffer :wk "Kill this buffer")
+        "b n" '(next-buffer :wk "Next buffer")
+        "b p" '(previous-buffer :wk "Previous buffer")
+        "b r" '(revert-buffer :wk "Reload buffer"))
+      (emacs/leader-keys
+        "q" '(:ignore t :wk "Quit Something")
+        "q b" '(kill-this-buffer :wk "Quit current Buffer") 
+        "q w" '(quit-window :wk "Quit Window and bury its Buffer"))
+      (emacs/leader-keys
+        "e" '(:ignore t :wk "Evaluate")    
+        "e b" '(eval-buffer :wk "Evaluate elisp in buffer")
+        "e d" '(eval-defun :wk "Evaluate defun containing or after point")
+        "e e" '(eval-expression :wk "Evaluate and elisp expression")
+        "e l" '(eval-last-sexp :wk "Evaluate elisp expression before point")
+        "e r" '(eval-region :wk "Evaluate elisp in region")) 
+      (emacs/leader-keys
+        "s" '(:ignore t :wk "Swiper Search")
+        "s s" '(swiper :wk "Search current Buffer") 
+        "s a" '(swiper-all :wk "Search all Active Buffers"))
+      (emacs/leader-keys
+        "h" '(:ignore t :wk "Help")
+        "h f" '(describe-function :wk "Describe function")
+        "h v" '(describe-variable :wk "Describe variable")
+        "h r r" '((lambda () (interactive) (load-file "~/.config/emacs/init.el")) :wk "Reload emacs config"))
+      (emacs/leader-keys
+        "t" '(:ignore t :wk "Toggle")
+        "t l" '(display-line-numbers-mode :wk "Toggle line numbers")
+        "t t" '(vterm-toggle :wk "Toggle Terminal")
+        "t v" '(visual-line-mode :wk "Toggle to View truncated lines"))
+      )
+#+end_src
+* SUDO EDIT
+Opening nano to edit files which require root permission is pain in the butt. This package
+=sudo-edit= allow us to edit files which require root permission with emacs.
+#+BEGIN_SRC emacs-lisp
+  (use-package sudo-edit
+    :ensure t
+    :bind ("s-e" . sudo-edit))
+#+END_SRC
+
+* ORG MODE
+** Enabling Table of Contents
+#+begin_src emacs-lisp
+  (use-package toc-org
+    :commands toc-org-enable
+    :init (add-hook 'org-mode-hook 'toc-org-enable))
+#+end_src
+** Enabling Org Bullets
+Org-bullets gives us attractive bullets rather than asterisks.
+#+begin_src emacs-lisp
+  (add-hook 'org-mode-hook 'org-indent-mode)
+  (use-package org-bullets)
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+
+#+end_src
+** Source Code Block Tag Expansion
+Org-tempo is not a separate package but a module within org that can be enabled.  Org-tempo allows for '<s' followed by TAB to expand to a begin_src tag.  Other expansions available include:
+
+| Typing the below + TAB | Expands to ...                          |
+|------------------------+-----------------------------------------|
+| <a                     | '#+BEGIN_EXPORT ascii' … '#+END_EXPORT  |
+| <c                     | '#+BEGIN_CENTER' … '#+END_CENTER'       |
+| <C                     | '#+BEGIN_COMMENT' … '#+END_COMMENT'     |
+| <e                     | '#+BEGIN_EXAMPLE' … '#+END_EXAMPLE'     |
+| <E                     | '#+BEGIN_EXPORT' … '#+END_EXPORT'       |
+| <h                     | '#+BEGIN_EXPORT html' … '#+END_EXPORT'  |
+| <l                     | '#+BEGIN_EXPORT latex' … '#+END_EXPORT' |
+| <q                     | '#+BEGIN_QUOTE' … '#+END_QUOTE'         |
+| <s                     | '#+BEGIN_SRC' … '#+END_SRC'             |
+| <v                     | '#+BEGIN_VERSE' … '#+END_VERSE'         |
+
+
+#+begin_src emacs-lisp 
+  (require 'org-tempo)
+#+end_src
+
+* LSP INTEGRATION
+These are several packages that provide Language Server Protocol Features for Several Languages.
+#+begin_src emacs-lisp
+  (use-package lsp-mode
+    :commands (lsp lsp-deferred)
+    :init
+    (setq lsp-keymap-prefix "C-c l")
+    :config
+    (lsp-enable-which-key-integration t)
+    :hook (prog-mode . lsp-mode)
+    )
+  (use-package lsp-ui
+    :commands lsp-ui-mode)
+  (setq lsp-ui-sideline-show-diagnostics t)
+  (setq lsp-ui-sideline-show-code-actions t)
+  (use-package lsp-pyright
+    :hook (python-mode . (lambda ()
+                           (require 'lsp-pyright)
+                           (lsp))))
+#+end_src
+
