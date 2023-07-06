@@ -232,11 +232,11 @@ So that you don't have to keep a hard-copy of cheatsheet at all times.
 #+begin_src emacs-lisp
   (use-package which-key
     :init
-    (which-key-mode 1))
-    ;;:config
-     ;;(setq which-key-sort-uppercase-first nil
-           ;;which-key-idle-delay 0.8
-           ;;which-key-separator " → " ))
+    (which-key-mode 1)
+    :config
+     (setq which-key-sort-uppercase-first nil
+           which-key-idle-delay 0.8
+           which-key-separator " → " ))
 #+end_src
 * BASIC INTERFACE SETTINGS
 These are settings that do not depend on packages and built-in enchancements to the UI.
