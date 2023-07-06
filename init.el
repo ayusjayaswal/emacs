@@ -4,6 +4,8 @@
                          ("elpa" . "https://elpa.gnu.org/packages/")))
 (package-initialize)
 
+(setq use-package-always-ensure t)
+
 (use-package doom-themes
   :config
   ;; Global settings (defaults)
@@ -12,10 +14,10 @@
   (load-theme 'doom-gruvbox t)
   (doom-themes-visual-bell-config)
   (doom-themes-neotree-config)
-  (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
+  (setq doom-themes-treemacs-theme "doom-gruvbox") ; use "doom-colors" for less minimal icon theme
   (doom-themes-treemacs-config)
   (doom-themes-org-config))
-(setq doom-theme 'doom-gruvbox )
+(setq doom-theme 'doom-gruvbox)
 
 (set-face-attribute 'default nil
                     :font "Mononoki Nerd Font"
@@ -101,9 +103,8 @@
 (setq dashboard-set-file-icons t)
 (setq dashboard-set-navigator t)
 (dolist (mode '(dashboard-mode-hook))
-  (add-hook mode (lambda () (display-line-numbers-mode 0))))
+  (add-hook mode (lambda () (display-line-numbers-mode 0)))) ;; Don't show line numbers, Obviosly
 
-;; Expands to: (elpaca evil (use-package evil :demand t))
 (use-package evil
   :init      ;; tweak evil's configuration before loading it
   (setq evil-want-integration t) ;; This is optional since it's already set to t by default.
@@ -176,8 +177,6 @@
 (setq make-backup-files nil)
 (setq auto-save-default nil)
 
-(setq use-package-always-ensure t)
-
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit) ;;
 
 (column-number-mode)       ;; Show Column numbers too.
@@ -197,10 +196,13 @@
   :ensure t
   :init (all-the-icons-ibuffer-mode 1))
 
-(defun config-reload ()
-  (interactive)
-  (org-babel-load-file (expand-file-name "~/.config/emacs/config.org")))
-(global-set-key (kbd "C-c r") 'config-reload)
+(use-package org-auto-tangle
+  :ensure t
+  :load-path "site-lisp/org-auto-tangle/"    ;; this line is necessary only if you cloned the repo in your site-lisp directory
+  :defer t
+  :hook (org-mode . org-auto-tangle-mode)
+  :config
+  (setq org-auto-tangle-default t))
 
 (global-subword-mode 1)
 
@@ -217,7 +219,7 @@
     "f" '(:ignore t :wk "File Options")
     "." '(find-file :wk "Find file")
     "f f" '(find-file :wk "Find file")
-    "f c" '((lambda () (interactive) (find-file "~/.config/emacs/config.org")) :wk "Edit emacs config")
+    "f c" '((lambda () (interactive) (find-file "~/.config/emacs/README.org")) :wk "Edit emacs config")
     "TAB TAB" '(comment-line :wk "Comment lines"))
   (emacs/leader-keys
     "o" '(:ignore t :wk "Org-Mode Commands")
@@ -230,7 +232,7 @@
     "; d" '(bookmark-delete :wk "Delete a Saved Bookmark"))
   (emacs/leader-keys
     "b" '(:ignore t :wk "buffer")
-    "b b" '(switch-to-buffer :wk "Switch buffer")
+    "b b" '(ibuffer-jump-to-buffer :wk "Switch buffer")
     "b i" '(ibuffer :wk "Ibuffer")
     "b k" '(kill-this-buffer :wk "Kill this buffer")
     "b n" '(next-buffer :wk "Next buffer")

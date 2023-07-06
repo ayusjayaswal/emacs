@@ -4,9 +4,11 @@
 #+DESCRIPTION: Ayush's Config For emacs
 #+OPTIONS: toc:2
 #+PROPERTY: header-args:emacs-lisp :tangle ./init.el
+#+auto_tangle: t
 
 * TABLE OF CONTENTS :toc:
 - [[#package-manager][PACKAGE MANAGER]]
+  - [[#ensure-package-manager-installs][Ensure Package Manager Installs]]
 - [[#appearance][APPEARANCE]]
   - [[#theme][Theme]]
   - [[#font][Font]]
@@ -25,7 +27,7 @@
   - [[#functionality][Functionality]]
   - [[#cool-icons][Cool Icons]]
 - [[#minor-conveiniences][MINOR CONVEINIENCES]]
-  - [[#reloading-the-configuration][Reloading the configuration]]
+  - [[#auto-org-babel-tangle][Auto Org Babel Tangle]]
   - [[#subwords][Subwords]]
 - [[#git-integration][GIT INTEGRATION]]
   - [[#magit][Magit]]
@@ -38,21 +40,26 @@
 - [[#lsp-integration][LSP INTEGRATION]]
 
 * PACKAGE MANAGER
+I use Melpa Package manager to manage my packages.
 #+begin_src emacs-lisp
-(require 'package)
-(setq package-archives '(("melpa" . "https://melpa.org/packages/")
-                         ("org" . "https://orgmode.org/elpa/")
-                         ("elpa" . "https://elpa.gnu.org/packages/")))
-(package-initialize)
+  (require 'package)
+  (setq package-archives '(("melpa" . "https://melpa.org/packages/")
+                           ("org" . "https://orgmode.org/elpa/")
+                           ("elpa" . "https://elpa.gnu.org/packages/")))
+  (package-initialize)
+#+end_src
+
+** Ensure Package Manager Installs
+#+begin_src emacs-lisp
+  (setq use-package-always-ensure t)
 #+end_src
 
 * APPEARANCE
-My Archmacs have killer looks. The code of this section is responsible for it.
+My Emacs must have killer looks. The code of this section is responsible for it.
 ** Theme
-When my crush rejected me by saying you are ugly. I learned that looks matter alot.
+When my crush rejected me saying you are ugly. I learned that looks matter alot.
 My emacs will not be ugly like me and no one will dump my config for this.
-So I decided to use =doom-themes=. You can change =doom-themes= to any other theme.
-Theme
+So I decided to use =doom-themes=.
 #+begin_src emacs-lisp
   (use-package doom-themes
     :config
@@ -62,10 +69,10 @@ Theme
     (load-theme 'doom-gruvbox t)
     (doom-themes-visual-bell-config)
     (doom-themes-neotree-config)
-    (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
+    (setq doom-themes-treemacs-theme "doom-gruvbox") ; use "doom-colors" for less minimal icon theme
     (doom-themes-treemacs-config)
     (doom-themes-org-config))
-  (setq doom-theme 'doom-gruvbox )
+  (setq doom-theme 'doom-gruvbox)
 #+end_src
 ** Font
 Just like with power comes great responsibility, with great theme comes great font.
@@ -108,7 +115,7 @@ Every time you change buffers, the current position of your cursor will be brief
       (beacon-mode 1))
 #+end_src
 ** Bottom Menu
-Vertico provides a performant and minimalistic vertical completion UI based on the default completion system. The focus of Vertico is to provide a UI which behaves correctly under all circumstances.
+Ivy provides a performant and minimalistic vertical completion UI based on the default completion system. The focus of Ivy is to provide a UI which behaves correctly under all circumstances. And if you use Vertico, Don't use this config.
 #+begin_src emacs-lisp
   (use-package counsel
     :after ivy
@@ -148,6 +155,7 @@ Vertico provides a performant and minimalistic vertical completion UI based on t
     (completion-category-overrides '((file (styles basic partial-completion)))))
 #+end_src
 ** Company
+Who doesn't want those nice auto-completions!
 #+begin_src emacs-lisp
   (use-package company )
   (add-hook 'after-init-hook 'global-company-mode)
@@ -168,11 +176,11 @@ An extensible emacs startup screen showing you what’s most important.
   (setq dashboard-set-file-icons t)
   (setq dashboard-set-navigator t)
   (dolist (mode '(dashboard-mode-hook))
-    (add-hook mode (lambda () (display-line-numbers-mode 0))))
+    (add-hook mode (lambda () (display-line-numbers-mode 0)))) ;; Don't show line numbers, Obviosly
 #+end_src
 ** Load Evil Mode
+I don't have a very strong Pinky, and I love vim too ...
 #+begin_src emacs-lisp
-  ;; Expands to: (elpaca evil (use-package evil :demand t))
   (use-package evil
     :init      ;; tweak evil's configuration before loading it
     (setq evil-want-integration t) ;; This is optional since it's already set to t by default.
@@ -188,6 +196,7 @@ An extensible emacs startup screen showing you what’s most important.
   (use-package evil-tutor)
 #+end_src
 ** Modeline
+It's Important for no reason but looks.
 #+begin_src emacs-lisp
   (use-package doom-modeline
     :init (doom-modeline-mode 1)
@@ -195,11 +204,13 @@ An extensible emacs startup screen showing you what’s most important.
   (setq doom-modeline-height 30)
 #+end_src
 ** Rainbow Delimiters
+Never get confused by Brackets again.
 #+begin_src emacs-lisp
   (use-package rainbow-delimiters
     :hook (prog-mode . rainbow-delimiters-mode))
 #+end_src
 ** Vterm
+If emacs fails, you'll need a terminal to run vim.
 #+begin_src emacs-lisp
   (use-package vterm)
   (setq vterm-toggle-fullscreen-p nil)
@@ -217,6 +228,7 @@ An extensible emacs startup screen showing you what’s most important.
     (add-hook mode (lambda () (display-line-numbers-mode 0))))
 #+end_src
 ** Which key
+So that you don't have to keep a hard-copy of cheatsheet at all times.
 #+begin_src emacs-lisp
   (use-package which-key
     :init
@@ -242,13 +254,14 @@ If you like using any of those, change =-1= to =1=.
   (scroll-bar-mode -1)
 #+END_SRC
 *** Display Line Numbers and Truncated Lines
-Following codeblock enables Line Numbers.
+Following codeblock enables Line Numbers, Truncates Lines and Highlights current lines.
 #+begin_src emacs-lisp
   (global-display-line-numbers-mode 1)
   (global-visual-line-mode t)
   (global-hl-line-mode t)
 #+end_src
 *** No Gui Dialogs
+This is not MS Word or VS Code that you will get GUI Dialog Boxes.
 #+begin_src emacs-lisp
   (setq use-dialog-box nil)  ;; Don't use gui dialog boxes.
 #+end_src
@@ -267,10 +280,12 @@ We use an actual replacement for it, keep reading or head directly to dashboard
 #+END_SRC
 ** Functionality
 *** Automatic Pairing
+VS Code magically completes quote marks, Why should emacs lag behind?
 #+begin_src emacs-lisp
   (electric-pair-mode 1)     ;; Enable automatic insertion of matching brackets
 #+end_src
 *** Change yes-or-no questions into y-or-n questions
+Why write "yes" when you can write "y"
 #+begin_src emacs-lisp
   (defalias 'yes-or-no-p 'y-or-n-p)
 #+end_src
@@ -280,16 +295,13 @@ I don't use either, you might want to turn those from =nil= to =t= if you do.
   (setq make-backup-files nil)
   (setq auto-save-default nil)
 #+end_src
-*** Ensure Package Manager Installs
-#+begin_src emacs-lisp
-  (setq use-package-always-ensure t)
-#+end_src
 *** Global Escape
 Use escape key to leave anything.
 #+begin_src emacs-lisp
   (global-set-key (kbd "<escape>") 'keyboard-escape-quit) ;;
 #+end_src
 *** Show Columns too
+Columns are important too, don't ignore their utility.
 #+begin_src emacs-lisp
   (column-number-mode)       ;; Show Column numbers too.
 #+end_src
@@ -302,6 +314,7 @@ You can use the bindings CTRL plus =/- for zooming in/out.  You can also use CTR
   (global-set-key (kbd "<C-wheel-down>") 'text-scale-decrease)
 #+end_src
 ** Cool Icons
+Why use vim, when emacs can render icons better.
 #+begin_src emacs-lisp
   (use-package all-the-icons
     :ensure t
@@ -315,22 +328,20 @@ You can use the bindings CTRL plus =/- for zooming in/out.  You can also use CTR
 #+end_src
 
 * MINOR CONVEINIENCES
-Emacs is at it's best when it just does things for you, shows you the way, guides you so to
-speak. This can be best achieved using a number of small extensions. While on their own they
-might not be particularly impressive. 
-** Reloading the configuration
-Closing and opening emacs again after some quick changes in config is pain, especially when
-you are using emacs as a window manager. So here I bind a key =C-c r= to do it quickly without
-closing emacs. 
-#+BEGIN_SRC emacs-lisp
-  (defun config-reload ()
-    (interactive)
-    (org-babel-load-file (expand-file-name "~/.config/emacs/config.org")))
-  (global-set-key (kbd "C-c r") 'config-reload)
-#+END_SRC
+Emacs is at it's best when it just does things for you, shows you the way, guides you so to speak.
+This can be best achieved using a number of small extensions. While on their own they might not be particularly impressive.
+** Auto Org Babel Tangle
+#+begin_src emacs-lisp
+  (use-package org-auto-tangle
+    :ensure t
+    :load-path "site-lisp/org-auto-tangle/"    ;; this line is necessary only if you cloned the repo in your site-lisp directory
+    :defer t
+    :hook (org-mode . org-auto-tangle-mode)
+    :config
+    (setq org-auto-tangle-default t))
+#+end_src
 ** Subwords
-Subword will remaps word-based editing commands to subword-based commands that 
-handle symbols with mixed uppercase and lowercase letters.
+Subword will remaps word-based editing commands to subword-based commands that handle symbols with mixed uppercase and lowercase letters.
 #+BEGIN_SRC emacs-lisp
   (global-subword-mode 1)
 #+END_SRC
@@ -364,7 +375,7 @@ It's easy and intuitive to use, shows it's options at a keypress and much more.
         "f" '(:ignore t :wk "File Options")
         "." '(find-file :wk "Find file")
         "f f" '(find-file :wk "Find file")
-        "f c" '((lambda () (interactive) (find-file "~/.config/emacs/config.org")) :wk "Edit emacs config")
+        "f c" '((lambda () (interactive) (find-file "~/.config/emacs/README.org")) :wk "Edit emacs config")
         "TAB TAB" '(comment-line :wk "Comment lines"))
       (emacs/leader-keys
         "o" '(:ignore t :wk "Org-Mode Commands")
@@ -377,7 +388,7 @@ It's easy and intuitive to use, shows it's options at a keypress and much more.
         "; d" '(bookmark-delete :wk "Delete a Saved Bookmark"))
       (emacs/leader-keys
         "b" '(:ignore t :wk "buffer")
-        "b b" '(switch-to-buffer :wk "Switch buffer")
+        "b b" '(ibuffer-jump-to-buffer :wk "Switch buffer")
         "b i" '(ibuffer :wk "Ibuffer")
         "b k" '(kill-this-buffer :wk "Kill this buffer")
         "b n" '(next-buffer :wk "Next buffer")
