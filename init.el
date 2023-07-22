@@ -48,47 +48,50 @@
 (use-package beacon
   :ensure t
   :config
-    (beacon-mode 1))
+  (beacon-mode 1))
 
 (use-package counsel
   :after ivy
+  :diminish
   :config (counsel-mode))
+
 (use-package ivy
   :bind
   ;; ivy-resume resumes the last Ivy-based completion.
   (("C-c C-r" . ivy-resume)
    ("C-x B" . ivy-switch-buffer-other-window))
+  :diminish
   :custom
   (setq ivy-use-virtual-buffers t)
   (setq ivy-count-format "(%d/%d) ")
   (setq enable-recursive-minibuffers t)
   :config
   (ivy-mode))
+
 (use-package all-the-icons-ivy-rich
+  :ensure t
   :init (all-the-icons-ivy-rich-mode 1))
 (use-package ivy-rich
-  :after ivy
-  :init (ivy-rich-mode 1) ;; this gets us descriptions in M-x.
-  :custom
-  (ivy-virtual-abbreviate 'full
-                          ivy-rich-switch-buffer-align-virtual-buffer t
-                          ivy-rich-path-style 'abbrev)
-  :config
-  (ivy-set-display-transformer 'ivy-switch-buffer
-                               'ivy-rich-switch-buffer-transformer))  ;; Enable rich annotations using the Marginalia package
-(use-package marginalia
-  :after ivy
-  :custom
-  (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil))
-  :init
-  (marginalia-mode))
-(use-package orderless
-  :custom
-  (completion-styles '(orderless basic))
-  (completion-category-overrides '((file (styles basic partial-completion)))))
+  :after counsel
+  :init (setq ivy-rich-path-style 'abbrev
+              ivy-virtual-abbreviate 'full)
+  :config (ivy-rich-mode))
 
-(use-package company )
-(add-hook 'after-init-hook 'global-company-mode)
+(use-package company
+  :defer 2
+  :diminish
+  :custom
+  (company-begin-commands '(self-insert-command))
+  (company-idle-delay .1)
+  (company-minimum-prefix-length 2)
+  (company-show-numbers t)
+  (company-tooltip-align-annotations 't)
+  (global-company-mode t))
+
+(use-package company-box
+  :after company
+  :diminish
+  :hook (company-mode . company-box-mode))
 
 (use-package dashboard
   :config
@@ -104,6 +107,10 @@
 (setq dashboard-set-navigator t)
 (dolist (mode '(dashboard-mode-hook))
   (add-hook mode (lambda () (display-line-numbers-mode 0)))) ;; Don't show line numbers, Obviosly
+
+(use-package flycheck
+  :ensure t
+  :init (global-flycheck-mode))
 
 (use-package evil
   :init      ;; tweak evil's configuration before loading it
@@ -123,9 +130,21 @@
   :init (doom-modeline-mode 1)
   :hook (after-init . doom-modeline-mode))
 (setq doom-modeline-height 30)
+;; Don't Show Evil Mode State in Modeline
+(with-eval-after-load 'evil
+  (setq evil-normal-state-tag   nil
+        evil-emacs-state-tag    nil
+        evil-insert-state-tag   nil
+        evil-motion-state-tag   nil
+        evil-visual-state-tag   nil
+        evil-operator-state-tag nil))
 
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
+
+(use-package rainbow-mode
+  :diminish
+  :hook org-mode prog-mode)
 
 (use-package vterm)
 (setq vterm-toggle-fullscreen-p nil)
@@ -145,10 +164,21 @@
 (use-package which-key
   :init
   (which-key-mode 1)
+  :diminish
   :config
-   (setq which-key-sort-uppercase-first nil
-         which-key-idle-delay 0.8
-         which-key-separator " → " ))
+  (setq which-key-side-window-location 'bottom
+        which-key-sort-order #'which-key-key-order
+        which-key-allow-imprecise-window-fit nil
+        which-key-sort-uppercase-first nil
+        which-key-add-column-padding 1
+        which-key-max-display-columns nil
+        which-key-min-display-lines 6
+        which-key-side-window-slot -10
+        which-key-side-window-max-height 0.25
+        which-key-idle-delay 0.8
+        which-key-max-description-length 25
+        which-key-allow-imprecise-window-fit nil
+        which-key-separator " → " ))
 
 ;  (setq ring-bell-function 'ignore)
 
@@ -169,6 +199,13 @@
 (set-keyboard-coding-system 'utf-8)
 (set-selection-coding-system 'utf-8)
 (prefer-coding-system 'utf-8)
+
+;;(set-frame-parameter nil 'alpha-background 90)
+;;(add-to-list 'default-frame-alist '(alpha-background . 90))
+;;(set-frame-parameter (selected-frame) 'alpha '(<active> . <inactive>))
+;;(set-frame-parameter (selected-frame) 'alpha <both>)
+(set-frame-parameter (selected-frame) 'alpha '(90 . 80))
+(add-to-list 'default-frame-alist '(alpha . (90 . 80)))
 
 (electric-pair-mode 1)     ;; Enable automatic insertion of matching brackets
 
@@ -206,6 +243,52 @@
 
 (global-subword-mode 1)
 
+(defun compile-c-cpp-program ()
+  (interactive)
+  (let* ((file-name (buffer-file-name))
+         (program-name (file-name-sans-extension file-name))
+         (compile-cmd (format "gcc -Wall -Wextra -o %s %s -lm" program-name file-name)))
+    ;; Compile the C program
+    (compile compile-cmd))
+  ;; Switch to the *compilation* buffer
+  (pop-to-buffer "*compilation*"))
+
+(defun run-c-cpp-program ()
+  (interactive)
+  (let* ((file-name (buffer-file-name))
+         (program-name (file-name-sans-extension file-name))
+         (executable program-name))
+
+    (if (file-exists-p executable)
+        (progn
+          ;; Run the executable in a comint-run buffer
+          (async-shell-command executable (format "*%s*" program-name))
+          (pop-to-buffer (format "*%s*" program-name)))
+      (message "Executable not found. Please compile the program first. Also, Make sure executable has same name as C source code without extension and in same directory as well."))))
+
+(defun run-python-program ()
+  (interactive)
+  (let* ((file-name (buffer-file-name))
+         (executable "python")
+         (args (list executable file-name)))
+
+    ;; Run the Python program in a comint-run buffer
+    (if (file-exists-p executable)
+        (progn
+          (pop-to-buffer (format "Python: %s" (buffer-name)))
+          (comint-mode)
+          (erase-buffer)
+          (apply 'make-comint-in-buffer "Python" nil executable nil args)))
+      (message "Python executable not found. Please make sure Python is installed.")))
+
+(use-package magit
+  :ensure t
+  :config
+  (setq magit-push-always-verify nil)
+  (setq git-commit-summary-max-length 50)
+  :bind
+  ("M-g" . magit-status))
+
 (use-package general
   :config
   (general-evil-setup)
@@ -218,13 +301,22 @@
   (emacs/leader-keys
     "f" '(:ignore t :wk "File Options")
     "." '(find-file :wk "Find file")
+    "SPC" '(counsel-M-x :wk "Counsel M-x")
     "f f" '(find-file :wk "Find file")
     "f c" '((lambda () (interactive) (find-file "~/.config/emacs/README.org")) :wk "Edit emacs config")
+    "f t" '((lambda () (interactive) (find-file "~/dox/orgs/org-agenda/tasks.org")) :wk "Open TODO File")
     "TAB TAB" '(comment-line :wk "Comment lines"))
   (emacs/leader-keys
     "o" '(:ignore t :wk "Org-Mode Commands")
     "o a" '(org-agenda :wk "Org Agenda")
     "o o" '(org-mode :wk "Org Mode"))
+(emacs/leader-keys
+    "c" '(:ignore t :wk "Compile Commands")
+    "c c" '(compile-c-cpp-program :wk "Compile C/C++ Prorgam"))
+(emacs/leader-keys
+    "r" '(:ignore t :wk "Run Commands")
+    "r c" '(run-c-cpp-program :wk "Run C/C++ Executable")
+    "r p" '(run-python-program :wk "Run Python Program"))
   (emacs/leader-keys
     ";" '(:ignore t :wk "Bookmark Options")
     "; b" '(bookmark-jump :wk "Quickly Jump to a Bookmark")
@@ -232,7 +324,7 @@
     "; d" '(bookmark-delete :wk "Delete a Saved Bookmark"))
   (emacs/leader-keys
     "b" '(:ignore t :wk "buffer")
-    "b b" '(ibuffer-jump-to-buffer :wk "Switch buffer")
+    "b b" '(switch-to-buffer :wk "Switch buffer")
     "b i" '(ibuffer :wk "Ibuffer")
     "b k" '(kill-this-buffer :wk "Kill this buffer")
     "b n" '(next-buffer :wk "Next buffer")
@@ -262,18 +354,111 @@
     "t" '(:ignore t :wk "Toggle")
     "t l" '(display-line-numbers-mode :wk "Toggle line numbers")
     "t t" '(vterm-toggle :wk "Toggle Terminal")
-    "t v" '(visual-line-mode :wk "Toggle to View truncated lines"))
-  )
+    "t v" '(visual-line-mode :wk "Toggle to View truncated lines")))
 
 (use-package sudo-edit
   :ensure t
   :bind ("s-e" . sudo-edit))
 
+(setq org-directory "~/dox/orgs/org-agenda")
+(setq org-agenda-files '("tasks.org"))
+;; If you only want to see the agenda for today
+;; (setq org-agenda-span 'day)
+(setq org-agenda-start-with-log-mode t)
+(setq org-log-done 'time)
+(setq org-todo-keywords
+      '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d!)")
+        (sequence "BACKLOG(b)" "PLAN(p)" "READY(r)" "ACTIVE(a)" "REVIEW(v)" "WAIT(w@/!)" "HOLD(h)" "|" "COMPLETED(c)" "CANC(k@)")))
+(setq org-agenda-custom-commands
+      '(("d" "Dashboard"
+         ((agenda "" ((org-deadline-warning-days 7)))
+          (todo "NEXT"
+                ((org-agenda-overriding-header "Next Tasks")))
+          (tags-todo "agenda/ACTIVE" ((org-agenda-overriding-header "Active Projects")))))
+
+        ("n" "Next Tasks"
+         ((todo "NEXT"
+                ((org-agenda-overriding-header "Next Tasks")))))
+
+
+        ("W" "Work Tasks" tags-todo "+work")
+
+        ;; Low-effort next actions
+        ("e" tags-todo "+TODO=\"NEXT\"+Effort<15&+Effort>0"
+         ((org-agenda-overriding-header "Low Effort Tasks")
+          (org-agenda-max-todos 20)
+          (org-agenda-files org-agenda-files)))
+
+        ("w" "Workflow Status"
+         ((todo "WAIT"
+                ((org-agenda-overriding-header "Waiting on External")
+                 (org-agenda-files org-agenda-files)))
+          (todo "REVIEW"
+                ((org-agenda-overriding-header "In Review")
+                 (org-agenda-files org-agenda-files)))
+          (todo "PLAN"
+                ((org-agenda-overriding-header "In Planning")
+                 (org-agenda-todo-list-sublevels nil)
+                 (org-agenda-files org-agenda-files)))
+          (todo "BACKLOG"
+                ((org-agenda-overriding-header "Project Backlog")
+                 (org-agenda-todo-list-sublevels nil)
+                 (org-agenda-files org-agenda-files)))
+          (todo "READY"
+                ((org-agenda-overriding-header "Ready for Work")
+                 (org-agenda-files org-agenda-files)))
+          (todo "ACTIVE"
+                ((org-agenda-overriding-header "Active Projects")
+                 (org-agenda-files org-agenda-files)))
+          (todo "COMPLETED"
+                ((org-agenda-overriding-header "Completed Projects")
+                 (org-agenda-files org-agenda-files)))
+          (todo "CANC"
+                ((org-agenda-overriding-header "Cancelled Projects")
+                 (org-agenda-files org-agenda-files)))))))
+
+(setq org-hide-emphasis-markers t)
+(require 'org)
+;; Function to set Liberation Sans font for Org mode buffers
+(defun set-org-buffer-font ()
+  (face-remap-add-relative 'default '(:family "Liberation Sans")))
+
+;; Add the hook to apply the font for Org mode buffers
+(add-hook 'org-mode-hook 'set-org-buffer-font)
+
+
+;; Define font faces
+(defface org-title-face
+  '((t (:inherit default :height 600 :underline nil :weight bold :font "Rothenburg Decorative")))
+  "Face for the org document title")
+(defface org-heading-face
+  '((t (:inherit default :family "URW Gothic")))
+  "Face for org headings")
+
+;; Set font faces for org levels
+(custom-theme-set-faces
+ 'user
+ '(org-level-8 ((t (:inherit org-heading-face :height 1.2))))
+ '(org-level-7 ((t (:inherit org-heading-face :height 1.2))))
+ '(org-level-6 ((t (:inherit org-heading-face :height 1.2))))
+ '(org-level-5 ((t (:inherit org-heading-face :height 1.2))))
+ '(org-level-4 ((t (:inherit org-heading-face :height 1.4))))
+ '(org-level-3 ((t (:inherit org-heading-face :height 1.4))))
+ '(org-level-2 ((t (:inherit org-heading-face :height 1.6))))
+ '(org-level-1 ((t (:inherit org-heading-face :weight bold :height 1.9))))
+ '(org-document-author ((t (:inherit org-author-face))))
+ '(org-document-title ((t (:inherit org-title-face)))))
+
+(setq org-todo-keywords
+      '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d!)")
+        (sequence "BACKLOG(b)" "PLAN(p)" "READY(r)" "ACTIVE(a)" "REVIEW(v)" "WAIT(w@/!)" "HOLD(h)" "|" "COMPLETED(c)" "CANC(k@)")))
+
 (use-package toc-org
   :commands toc-org-enable
   :init (add-hook 'org-mode-hook 'toc-org-enable))
 
-(add-hook 'org-mode-hook 'org-indent-mode)
+(add-hook 'org-mode-hook 'org-indent-mode) 
+(add-hook 'org-mode-hook 'variable-pitch-mode) 
 (use-package org-bullets)
 (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
 
