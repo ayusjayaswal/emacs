@@ -240,21 +240,21 @@ Never get confused by Brackets again.
 ** Vterm
 If emacs fails, you'll need a terminal to run vim.
 #+begin_src emacs-lisp
-    (use-package vterm)
-    (setq vterm-toggle-fullscreen-p nil)
-    (add-to-list 'display-buffer-alist
-                 '((lambda (buffer-or-name _)
-                     (let ((buffer (get-buffer buffer-or-name)))
-                       (with-current-buffer buffer
-                         (or (equal major-mode 'vterm-mode)
-                             (string-prefix-p vterm-buffer-name (buffer-name buffer))))))
-                   (display-buffer-reuse-window display-buffer-at-bottom)
-                   (reusable-frames . visible)
-                   (window-height . 0.3)))
-    ;; Disable line numbers for some modes
-    (dolist (mode '(vterm-mode-hook))
-      (add-hook mode (lambda () (display-line-numbers-mode 0))))
-    (use-package vterm-toggle)
+  (use-package vterm)
+  (setq vterm-toggle-fullscreen-p nil)
+  (add-to-list 'display-buffer-alist
+               '((lambda (buffer-or-name _)
+                   (let ((buffer (get-buffer buffer-or-name)))
+                     (with-current-buffer buffer
+                       (or (equal major-mode 'vterm-mode)
+                           (string-prefix-p vterm-buffer-name (buffer-name buffer))))))
+                 (display-buffer-reuse-window display-buffer-at-bottom)
+                 (reusable-frames . visible)
+                 (window-height . 0.3)))
+  ;; Disable line numbers for some modes
+  (dolist (mode '(vterm-mode-hook))
+    (add-hook mode (lambda () (display-line-numbers-mode 0))))
+  (use-package vterm-toggle)
 #+end_src
 ** Which key
 So that you don't have to keep a hard-copy of cheatsheet at all times.
@@ -324,7 +324,7 @@ We use an actual replacement for it, keep reading or head directly to dashboard
   ;;(add-to-list 'default-frame-alist '(alpha-background . 90))
   ;;(set-frame-parameter (selected-frame) 'alpha '(<active> . <inactive>))
   ;;(set-frame-parameter (selected-frame) 'alpha <both>)
-;;  (set-frame-parameter (selected-frame) 'alpha '(90 . 80))
+  ;;  (set-frame-parameter (selected-frame) 'alpha '(90 . 80))
   (add-to-list 'default-frame-alist '(alpha . (90 . 80)))
 #+end_src
 ** Functionality
@@ -397,47 +397,47 @@ subword will remaps word-based editing commands to subword-based commands that h
 *** Compile
 **** C compilation
 #+begin_src emacs-lisp
-(defun compile-c-cpp-program ()
-  (interactive)
-  (let* ((file-name (buffer-file-name))
-         (program-name (file-name-sans-extension file-name))
-         (compile-cmd (format "gcc -Wall -Wextra -o %s %s -lm" program-name file-name)))
-    ;; Compile the C program
-    (compile compile-cmd))
-  ;; Switch to the *compilation* buffer
-  (pop-to-buffer "*compilation*"))
+  (defun compile-c-cpp-program ()
+    (interactive)
+    (let* ((file-name (buffer-file-name))
+           (program-name (file-name-sans-extension file-name))
+           (compile-cmd (format "gcc -Wall -Wextra -o %s %s -lm" program-name file-name)))
+      ;; Compile the C program
+      (compile compile-cmd))
+    ;; Switch to the *compilation* buffer
+    (pop-to-buffer "*compilation*"))
 #+end_src
 *** Run
 **** C programs
 #+begin_src emacs-lisp
-(defun run-c-cpp-program ()
-  (interactive)
-  (let* ((file-name (buffer-file-name))
-         (program-name (file-name-sans-extension file-name))
-         (executable program-name))
+  (defun run-c-cpp-program ()
+    (interactive)
+    (let* ((file-name (buffer-file-name))
+           (program-name (file-name-sans-extension file-name))
+           (executable program-name))
 
-    (if (file-exists-p executable)
-        (progn
-          ;; Run the executable in a comint-run buffer
-          (async-shell-command executable (format "*%s*" program-name))
-          (pop-to-buffer (format "*%s*" program-name)))
-      (message "Executable not found. Please compile the program first. Also, Make sure executable has same name as C source code without extension and in same directory as well."))))
+      (if (file-exists-p executable)
+          (progn
+            ;; Run the executable in a comint-run buffer
+            (async-shell-command executable (format "*%s*" program-name))
+            (pop-to-buffer (format "*%s*" program-name)))
+        (message "Executable not found. Please compile the program first. Also, Make sure executable has same name as C source code without extension and in same directory as well."))))
 #+end_src
 **** Python Programs
 #+begin_src emacs-lisp
-(defun run-python-program ()
-  (interactive)
-  (let* ((file-name (buffer-file-name))
-         (executable "python")
-         (args (list executable file-name)))
+  (defun run-python-program ()
+    (interactive)
+    (let* ((file-name (buffer-file-name))
+           (executable "python")
+           (args (list executable file-name)))
 
-    ;; Run the Python program in a comint-run buffer
-    (if (file-exists-p executable)
-        (progn
-          (pop-to-buffer (format "Python: %s" (buffer-name)))
-          (comint-mode)
-          (erase-buffer)
-          (apply 'make-comint-in-buffer "Python" nil executable nil args)))
+      ;; Run the Python program in a comint-run buffer
+      (if (file-exists-p executable)
+          (progn
+            (pop-to-buffer (format "Python: %s" (buffer-name)))
+            (comint-mode)
+            (erase-buffer)
+            (apply 'make-comint-in-buffer "Python" nil executable nil args)))
       (message "Python executable not found. Please make sure Python is installed.")))
 #+end_src
 * Git Integration
@@ -477,10 +477,10 @@ It's easy and intuitive to use, shows it's options at a keypress and much more.
       "o" '(:ignore t :wk "Org-Mode Commands")
       "o a" '(org-agenda :wk "Org Agenda")
       "o o" '(org-mode :wk "Org Mode"))
-  (emacs/leader-keys
+    (emacs/leader-keys
       "c" '(:ignore t :wk "Compile Commands")
       "c c" '(compile-c-cpp-program :wk "Compile C/C++ Prorgam"))
-  (emacs/leader-keys
+    (emacs/leader-keys
       "r" '(:ignore t :wk "Run Commands")
       "r c" '(run-c-cpp-program :wk "Run C/C++ Executable")
       "r p" '(run-python-program :wk "Run Python Program"))
@@ -646,7 +646,7 @@ Opening nano to edit files which require root permission is pain in the butt. Th
            ("C-c n i" . org-roam-node-insert))
     :config
     (org-roam-setup))
-    (use-package org-roam-ui)
+  (use-package org-roam-ui)
 
 #+end_src
 ** Enabling Table of Contents

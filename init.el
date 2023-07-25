@@ -202,11 +202,11 @@
 (prefer-coding-system 'utf-8)
 
 ;;(set-frame-parameter nil 'alpha-background 90)
-  ;;(add-to-list 'default-frame-alist '(alpha-background . 90))
-  ;;(set-frame-parameter (selected-frame) 'alpha '(<active> . <inactive>))
-  ;;(set-frame-parameter (selected-frame) 'alpha <both>)
+;;(add-to-list 'default-frame-alist '(alpha-background . 90))
+;;(set-frame-parameter (selected-frame) 'alpha '(<active> . <inactive>))
+;;(set-frame-parameter (selected-frame) 'alpha <both>)
 ;;  (set-frame-parameter (selected-frame) 'alpha '(90 . 80))
-  (add-to-list 'default-frame-alist '(alpha . (90 . 80)))
+(add-to-list 'default-frame-alist '(alpha . (90 . 80)))
 
 (electric-pair-mode 1)     ;; Enable automatic insertion of matching brackets
 
@@ -280,7 +280,7 @@
           (comint-mode)
           (erase-buffer)
           (apply 'make-comint-in-buffer "Python" nil executable nil args)))
-      (message "Python executable not found. Please make sure Python is installed.")))
+    (message "Python executable not found. Please make sure Python is installed.")))
 
 (use-package magit
   :ensure t
@@ -311,10 +311,10 @@
     "o" '(:ignore t :wk "Org-Mode Commands")
     "o a" '(org-agenda :wk "Org Agenda")
     "o o" '(org-mode :wk "Org Mode"))
-(emacs/leader-keys
+  (emacs/leader-keys
     "c" '(:ignore t :wk "Compile Commands")
     "c c" '(compile-c-cpp-program :wk "Compile C/C++ Prorgam"))
-(emacs/leader-keys
+  (emacs/leader-keys
     "r" '(:ignore t :wk "Run Commands")
     "r c" '(run-c-cpp-program :wk "Run C/C++ Executable")
     "r p" '(run-python-program :wk "Run Python Program"))
@@ -465,7 +465,7 @@
          ("C-c n i" . org-roam-node-insert))
   :config
   (org-roam-setup))
-  (use-package org-roam-ui)
+(use-package org-roam-ui)
 
 (use-package toc-org
   :commands toc-org-enable
@@ -494,25 +494,3 @@
   :hook (python-mode . (lambda ()
                          (require 'lsp-pyright)
                          (lsp))))
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   '(vterm-toggle which-key vterm use-package toc-org sudo-edit rainbow-mode rainbow-delimiters org-roam-ui org-bullets org-auto-tangle melpa-upstream-visit magit lsp-ui lsp-pyright general flycheck evil-tutor evil-collection doom-themes doom-modeline dashboard counsel company-box beacon all-the-icons-ivy-rich all-the-icons-ibuffer all-the-icons-dired)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(org-document-author ((t (:inherit org-author-face))))
- '(org-document-title ((t (:inherit org-title-face))))
- '(org-level-1 ((t (:inherit org-heading-face :weight bold :height 1.9))))
- '(org-level-2 ((t (:inherit org-heading-face :height 1.6))))
- '(org-level-3 ((t (:inherit org-heading-face :height 1.4))))
- '(org-level-4 ((t (:inherit org-heading-face :height 1.4))))
- '(org-level-5 ((t (:inherit org-heading-face :height 1.2))))
- '(org-level-6 ((t (:inherit org-heading-face :height 1.2))))
- '(org-level-7 ((t (:inherit org-heading-face :height 1.2))))
- '(org-level-8 ((t (:inherit org-heading-face :height 1.2)))))
