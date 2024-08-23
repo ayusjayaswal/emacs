@@ -232,6 +232,7 @@ Never get confused by Brackets again.
     :hook (prog-mode . rainbow-delimiters-mode))
 #+end_src
 ** Rainbow Mode
+I dont identify as lgbtq. You must remember that.
 #+begin_src emacs-lisp
   (use-package rainbow-mode
     :diminish
